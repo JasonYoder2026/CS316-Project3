@@ -26,7 +26,7 @@ public class Client {
         System.out.println("Commands:");
         System.out.println("get \"<filename>\" - Download file from server");
         System.out.println("ls - List files in server");
-        System.out.println("delete \"<filename>\" - Delete file from server");
+        System.out.println("rm \"<filename>\" - Delete file from server");
         System.out.println("mv \"<filename>\" \"<newfilename>\" - Rename file in server");
         System.out.println("ftp \"<filename>\" - Upload file to server");
         System.out.println("exit - Exit server");
@@ -64,7 +64,7 @@ public class Client {
             case ("ls"):
                 commandBytes = ByteBuffer.wrap("l".getBytes());
                 break;
-            case ("delete"):
+            case ("rm"):
                 commandBytes = ByteBuffer.wrap(("r" + commandParts[1]).getBytes());
                 break;
             case ("mv"):
