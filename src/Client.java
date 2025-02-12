@@ -40,6 +40,7 @@ public class Client {
                 socketChannel.write(commandBytes);
             } catch (Exception e) {
                 System.err.print("Error sending command to server.\n");
+                break;
             }
         }
     }
