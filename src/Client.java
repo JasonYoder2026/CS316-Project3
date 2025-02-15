@@ -1,5 +1,10 @@
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Scanner;
 import java.util.regex.Matcher;
@@ -22,6 +27,7 @@ public class Client {
     }
 
     private static void menu(SocketChannel socketChannel) {
+        Scanner input = new Scanner(System.in);
         System.out.println("Connected to server...");
         System.out.println("Commands:");
         System.out.println("get \"<filename>\" - Download file from server");
@@ -32,17 +38,23 @@ public class Client {
         System.out.println("exit - Exit server");
         while(true) {
             System.out.println(">>");
-            Scanner input = new Scanner(System.in);
             String command = input.nextLine().trim();
             String[] commandParts = getCommandParts(command);
             ByteBuffer commandBytes = processCommand(commandParts);
-            try {
-                socketChannel.write(commandBytes);
-            } catch (Exception e) {
-                System.err.print("Error sending command to server.\n");
-                break;
+            if(commandBytes.getChar(0) == 'u') {
+                uploadfile(socketChannel, commandParts[1]);
+            } else if(commandBytes.getChar(0) == 'd') {
+                downloadFile(socketChannel, commandParts[1]);
+            } else {
+                try {
+                    socketChannel.write(commandBytes);
+                } catch (Exception e) {
+                    System.err.print("Error sending command to server.\n");
+                    break;
+                }
             }
         }
+        input.close();
     }
 
     private static String[] getCommandParts(String command) {
@@ -81,6 +93,49 @@ public class Client {
                 System.out.println("Invalid command");
         }
         return commandBytes;
+    }
+
+    private static void uploadfile(SocketChannel socket, String filename) {
+        File file = new File("ClientFiles/" + filename);
+        if(!file.exists()) {
+            System.out.println("File not found.");
+        } else {
+            try {
+                socket.write(ByteBuffer.wrap("u".getBytes()));
+                FileInputStream fs = new FileInputStream(file);
+                FileChannel fc = fs.getChannel();
+                ByteBuffer fileContent = ByteBuffer.allocate(1024);
+                int byteRead;
+                do {
+                    byteRead = fc.read(fileContent);
+                    fileContent.flip();
+                    socket.write(fileContent);
+                    fileContent.clear();
+                } while(byteRead >= 0);
+                fs.close();
+            } catch (IOException e) {
+                System.err.print("Error reading file.\n");
+            }
+        }
+    }
+
+    private static void downloadFile(SocketChannel socket, String filename) {
+        try {
+            socket.write(ByteBuffer.wrap(("d" + filename).getBytes()));
+            FileOutputStream fs = new FileOutputStream("ClientFiles/" + filename, true);
+            FileChannel fc = fs.getChannel();
+            ByteBuffer fileContent = ByteBuffer.allocate(1024);
+
+            while (socket.read(fileContent) >= 0) {
+                fileContent.flip();
+                fc.write(fileContent);
+                fileContent.clear();
+            }
+            fs.close();
+
+        } catch (IOException e) {
+            System.err.print("Error fetching file.\n");
+        }
     }
 }
 
