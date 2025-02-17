@@ -69,7 +69,7 @@ public class Client {
     }
 
     private static ByteBuffer processCommand(String[] commandParts) {
-        ByteBuffer commandBytes =null;
+        ByteBuffer commandBytes = null;
         switch (commandParts[0].toLowerCase()) {
             case ("get"):
                 commandBytes = ByteBuffer.wrap(("d" + commandParts[1]).getBytes());
