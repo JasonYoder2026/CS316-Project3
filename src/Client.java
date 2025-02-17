@@ -42,7 +42,6 @@ public class Client {
             } catch (IOException e) {
                 System.err.println("Error processing command.");
             }
-            authentication(socketChannel);
             socketChannel.close();
         }
         input.close();
@@ -65,20 +64,24 @@ public class Client {
             case ("get"):
                 commandBytes = ByteBuffer.wrap(("d" + commandParts[1]).getBytes());
                 downloadFile(socketChannel, commandParts[1]);
+                authentication(socketChannel, "Download");
                 break;
             case ("ls"):
                 commandBytes = ByteBuffer.wrap("l".getBytes());
                 socketChannel.write(commandBytes);
+                authentication(socketChannel, "List"); //fix this
                 socketChannel.shutdownOutput();
                 break;
             case ("rm"):
                 commandBytes = ByteBuffer.wrap(("r" + commandParts[1]).getBytes());
                 socketChannel.write(commandBytes);
+                authentication(socketChannel, "Deletion");
                 socketChannel.shutdownOutput();
                 break;
             case ("mv"):
                 commandBytes = ByteBuffer.wrap(("m" + commandParts[1] + commandParts[2]).getBytes());
                 socketChannel.write(commandBytes);
+                authentication(socketChannel, "Renaming");
                 socketChannel.shutdownOutput();
                 break;
             case ("ftp"):
@@ -140,7 +143,7 @@ public class Client {
         }
     }
 
-    private static void authentication(SocketChannel socket) {
+    private static void authentication(SocketChannel socket, String command) {
         try {
             ByteBuffer buffer = ByteBuffer.allocate(1024);
             int bytesRead = socket.read(buffer);
@@ -148,11 +151,20 @@ public class Client {
             byte[] a = new byte[bytesRead];
             buffer.get(a);
             String statusCode = new String(a);
-            if (statusCode.equals("401")) {
-                System.out.println("An error occurred.");
+            if (command.equals("List")) {
+                System.out.println("Files in server:");
+                while (socket.read(buffer) >= 0) {
+                    buffer.flip();
+                    byte[] b = new byte[bytesRead];
+                    buffer.get(b);
+                    System.out.println(new String(b));
+                    buffer.clear();
+                }
+            }else if (statusCode.equals("400")) {
+                System.out.println(command + " unsuccessful. An error occurred.");
                 System.exit(1);
             } else if (statusCode.equals("200")) {
-                System.out.println("Command processed successfully.");
+                System.out.println(command + " successful.");
             } else {
                 System.out.println(statusCode);
             }
