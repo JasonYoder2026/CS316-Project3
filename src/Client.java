@@ -19,14 +19,6 @@ public class Client {
 
         int serverPort = Integer.parseInt(args[1]);
 
-        SocketChannel socketChannel = SocketChannel.open();
-        socketChannel.connect(new InetSocketAddress(args[0], serverPort));
-
-        menu(socketChannel);
-        socketChannel.close();
-    }
-
-    private static void menu(SocketChannel socketChannel) {
         Scanner input = new Scanner(System.in);
         System.out.println("Connected to server...");
         System.out.println("Commands:");
@@ -37,22 +29,21 @@ public class Client {
         System.out.println("ftp \"<filename>\" - Upload file to server");
         System.out.println("exit - Exit server");
         while(true) {
+            SocketChannel socketChannel = SocketChannel.open();
+            socketChannel.connect(new InetSocketAddress(args[0], serverPort));
             System.out.println(">>");
             String command = input.nextLine().trim();
             String[] commandParts = getCommandParts(command);
-            ByteBuffer commandBytes = processCommand(commandParts);
-            if(commandBytes.getChar(0) == 'u') {
-                uploadfile(socketChannel, commandParts[1]);
-            } else if(commandBytes.getChar(0) == 'd') {
-                downloadFile(socketChannel, commandParts[1]);
-            } else {
-                try {
-                    socketChannel.write(commandBytes);
-                } catch (Exception e) {
-                    System.err.print("Error sending command to server.\n");
+            try {
+                ByteBuffer cmd = processCommand(commandParts, socketChannel);
+                if (cmd.getChar(0) == 'e') {
                     break;
                 }
+            } catch (IOException e) {
+                System.err.println("Error processing command.");
             }
+            authentication(socketChannel);
+            socketChannel.close();
         }
         input.close();
     }
@@ -68,26 +59,34 @@ public class Client {
         return commandParts;
     }
 
-    private static ByteBuffer processCommand(String[] commandParts) {
+    private static ByteBuffer processCommand(String[] commandParts, SocketChannel socketChannel) throws IOException {
         ByteBuffer commandBytes = null;
         switch (commandParts[0].toLowerCase()) {
             case ("get"):
                 commandBytes = ByteBuffer.wrap(("d" + commandParts[1]).getBytes());
+                downloadFile(socketChannel, commandParts[1]);
                 break;
             case ("ls"):
                 commandBytes = ByteBuffer.wrap("l".getBytes());
+                socketChannel.write(commandBytes);
+                socketChannel.shutdownOutput();
                 break;
             case ("rm"):
                 commandBytes = ByteBuffer.wrap(("r" + commandParts[1]).getBytes());
+                socketChannel.write(commandBytes);
+                socketChannel.shutdownOutput();
                 break;
             case ("mv"):
                 commandBytes = ByteBuffer.wrap(("m" + commandParts[1] + commandParts[2]).getBytes());
+                socketChannel.write(commandBytes);
+                socketChannel.shutdownOutput();
                 break;
             case ("ftp"):
                 commandBytes = ByteBuffer.wrap(("u" + commandParts[1]).getBytes());
+                uploadFile(socketChannel, commandParts[1]);
                 break;
             case ("exit"):
-                System.exit(0);
+                commandBytes = ByteBuffer.wrap("e".getBytes());
                 break;
             default:
                 System.out.println("Invalid command");
@@ -95,7 +94,7 @@ public class Client {
         return commandBytes;
     }
 
-    private static void uploadfile(SocketChannel socket, String filename) {
+    private static void uploadFile(SocketChannel socket, String filename) {
         File file = new File("ClientFiles/" + filename);
         if(!file.exists()) {
             System.out.println("File not found.");
@@ -113,6 +112,7 @@ public class Client {
                     fileContent.clear();
                 } while(byteRead >= 0);
                 fs.close();
+                socket.shutdownOutput();
             } catch (IOException e) {
                 System.err.print("Error reading file.\n");
             }
@@ -122,6 +122,7 @@ public class Client {
     private static void downloadFile(SocketChannel socket, String filename) {
         try {
             socket.write(ByteBuffer.wrap(("d" + filename).getBytes()));
+            socket.shutdownOutput();
             FileOutputStream fs = new FileOutputStream("ClientFiles/" + filename, true);
             FileChannel fc = fs.getChannel();
             ByteBuffer fileContent = ByteBuffer.allocate(1024);
@@ -132,9 +133,31 @@ public class Client {
                 fileContent.clear();
             }
             fs.close();
+            System.out.println(filename + " downloaded.");
 
         } catch (IOException e) {
             System.err.print("Error fetching file.\n");
+        }
+    }
+
+    private static void authentication(SocketChannel socket) {
+        try {
+            ByteBuffer buffer = ByteBuffer.allocate(1024);
+            int bytesRead = socket.read(buffer);
+            buffer.flip();
+            byte[] a = new byte[bytesRead];
+            buffer.get(a);
+            String statusCode = new String(a);
+            if (statusCode.equals("401")) {
+                System.out.println("An error occurred.");
+                System.exit(1);
+            } else if (statusCode.equals("200")) {
+                System.out.println("Command processed successfully.");
+            } else {
+                System.out.println(statusCode);
+            }
+        } catch (IOException e) {
+            System.err.println("Error reading message.");
         }
     }
 }
