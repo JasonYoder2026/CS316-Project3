@@ -54,6 +54,7 @@ public class Client {
                     } catch (IOException e) {
                         System.err.print("Error fetching file.\n");
                     }
+                    downloadChannel.close();
                     break;
                 case ("ls"):
                     SocketChannel listChannel = SocketChannel.open();
@@ -69,6 +70,7 @@ public class Client {
                         System.out.println(new String(b));
                         files.clear();
                     }
+                    listChannel.close();
                     break;
                 case ("rm"):
                     SocketChannel deleteChannel = SocketChannel.open();
@@ -78,6 +80,7 @@ public class Client {
                     deleteChannel.write(ByteBuffer.wrap(("r" + filenameToDelete).getBytes()));
                     authentication("Deletion", deleteChannel);
                     deleteChannel.shutdownOutput();
+                    deleteChannel.close();
                     break;
                 case ("mv"):
                     SocketChannel renameChannel = SocketChannel.open();
@@ -89,6 +92,7 @@ public class Client {
                     renameChannel.write(ByteBuffer.wrap(("m$" + filenameToRename + "$" + newFilename).getBytes()));
                     renameChannel.shutdownOutput();
                     authentication("Rename", renameChannel);
+                    renameChannel.close();
                     break;
                 case ("ftp"):
                     SocketChannel uploadChannel = SocketChannel.open();
@@ -118,6 +122,7 @@ public class Client {
                             System.err.print("Error reading file.\n");
                         }
                     }
+                    uploadChannel.close();
                     break;
                 case ("exit"):
                     System.exit(0);
@@ -142,6 +147,5 @@ public class Client {
             System.out.println(command + " successful.");
         }
     }
-
 }
 
