@@ -125,6 +125,10 @@ public class Client {
                     uploadChannel.close();
                     break;
                 case ("exit"):
+                    SocketChannel exitChannel = SocketChannel.open();
+                    exitChannel.connect(new InetSocketAddress(args[0], serverPort));
+                    exitChannel.write(ByteBuffer.wrap("e".getBytes()));
+                    authentication("Exit", exitChannel);
                     System.exit(0);
                     break;
                 default:
