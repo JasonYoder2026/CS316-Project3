@@ -1,3 +1,4 @@
+import java.io.File;
 import java.io.FileInputStream;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
@@ -30,29 +31,38 @@ public class Server {
             // - I am receiving a ByteBuffer of a big string
             // containing command + user data all 'separated' by quotes
             // - Use regex to separate for realsies
-            String commandParts = new String(a);
-            ByteBuffer commandBytes = processCommand(commandParts);
+            // - u"filename"filebytes
+            // - mv"filename""newname"
 
+            String byteString = new String(a);
+            String[] byteStringArray = {byteString};
+            //processCommand() receives a string array of [u"filename"filebytes]
+//            ByteBuffer pieces = processCommand(byteStringArray);
+
+            //TODO:
+            // - do something with the bytebuffer after the methods have been performed on it? (maybe)
         }
     }
 
-    private static ByteBuffer processCommand(String[] commandParts) {
-        ByteBuffer commandBytes =null;
+    //may or may not need to return a bytebuffer with this command
+    // - it would be sent back to the main command for something
+    // - maybe a status message to client
+    private static void processCommand(String[] commandParts) {
         switch (commandParts[0].toLowerCase()) {
-            case ("get"):
-                commandBytes = ByteBuffer.wrap(("d" + commandParts[1]).getBytes());
+            case ("d"):
+                downloadFile(commandParts[1], commandParts[2]); //pass filename and/or filebytes
                 break;
-            case ("ls"):
-                commandBytes = ByteBuffer.wrap("l".getBytes());
+            case ("l"):
+                listFiles();
                 break;
-            case ("rm"):
-                commandBytes = ByteBuffer.wrap(("r" + commandParts[1]).getBytes());
+            case ("r"):
+                deleteFile();
                 break;
-            case ("mv"):
-                commandBytes = ByteBuffer.wrap(("m" + commandParts[1] + commandParts[2]).getBytes());
+            case ("m"):
+                renameFile();
                 break;
-            case ("ftp"):
-                commandBytes = ByteBuffer.wrap(("u" + commandParts[1]).getBytes());
+            case ("u"):
+                uploadFile();
                 break;
             case ("exit"):
                 System.exit(0);
@@ -60,27 +70,11 @@ public class Server {
             default:
                 System.out.println("Invalid command");
         }
-        return commandBytes;
-    }
-
-
-    //ls = return array of all filenames in the db
-    public static void listFiles(String[] args) {
-
-    }
-
-    //delete = delete file that user specifies in command
-    public static void deleteFile(String[] args) {
-
-    }
-
-    //upload = upload a file into the server db
-    public static void uploadFile(String[] args) {
-
     }
 
     //download = accept file from server side into the client side
-    public static void downloadFile(String[] args) {
+    public static void downloadFile(String filename, String fileBytes) {
+        File file = new File("ServerFiles/" + fileBytes); //access files in
         if (!file.exists()) {
             System.out.println("File doesn't exist");
         } else {
@@ -103,8 +97,23 @@ public class Server {
         }
     }
 
+    //ls = return array of all filenames in the db
+    public static void listFiles(String[] args) {
+
+    }
+
+    //delete = delete file that user specifies in command
+    public static void deleteFile(String[] args) {
+
+    }
+
+    //upload = upload a file into the server db
+    public static void uploadFile(String[] args) {
+
+    }
+
     //rename = change file name
-    public static void remaneFile(String[] args) {
+    public static void renameFile(String[] args) {
 
     }
 
