@@ -39,22 +39,35 @@ public class Client {
                     String filename = input.nextLine().trim();
                     downloadChannel.write(ByteBuffer.wrap(("d" + filename).getBytes()));
                     downloadChannel.shutdownOutput();
-                    try {
-                        FileOutputStream fs = new FileOutputStream("ClientFiles/" + filename, true);
-                        FileChannel fc = fs.getChannel();
-                        ByteBuffer fileContent = ByteBuffer.allocate(1024);
 
-                        while (downloadChannel.read(fileContent) >= 0) {
-                            fileContent.flip();
-                            fc.write(fileContent);
-                            fileContent.clear();
+                    ByteBuffer status = ByteBuffer.allocate(1024);
+                    downloadChannel.read(status);
+                    status.flip();
+                    byte[] statusBytes = new byte[status.remaining()];
+                    status.get(statusBytes);
+                    String statusCode = new String(statusBytes);
+
+                    if(statusCode.equals("400")) {
+                        System.out.println("File doesn't exist");
+                        break;
+                    } else {
+                        try {
+                            FileOutputStream fs = new FileOutputStream("ClientFiles/" + filename, true);
+                            FileChannel fc = fs.getChannel();
+                            ByteBuffer fileContent = ByteBuffer.allocate(1024);
+
+                            while (downloadChannel.read(fileContent) >= 0) {
+                                fileContent.flip();
+                                fc.write(fileContent);
+                                fileContent.clear();
+                            }
+                            fs.close();
+                        } catch (IOException e) {
+                            System.err.print("Error fetching file.\n");
                         }
-                        fs.close();
-                        authentication("Download", downloadChannel);
-                    } catch (IOException e) {
-                        System.err.print("Error fetching file.\n");
                     }
                     downloadChannel.close();
+
                     break;
                 case ("ls"):
                     SocketChannel listChannel = SocketChannel.open();
@@ -63,7 +76,7 @@ public class Client {
                     listChannel.shutdownOutput();
                     System.out.println("Files: ");
                     ByteBuffer files = ByteBuffer.allocate(1024);
-                    while (listChannel.read(files) >= 0) {
+                    while (listChannel.read(files) > 0) {
                         files.flip();
                         byte[] b = new byte[files.remaining()];
                         files.get(b);
