@@ -1,5 +1,7 @@
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -98,23 +100,56 @@ public class Server {
     }
 
     //ls = return array of all filenames in the db
-    public static void listFiles(String[] args) {
-
+    public static void listFiles() {
+        File file = new File("ServerFiles/");
+        File[] files = file.listFiles();
+        if(files == null) {
+            System.out.println("No files found.");
+        } else {
+            for (File f : files) {
+                System.out.println(f.getName());
+            }
+        }
     }
 
     //delete = delete file that user specifies in command
-    public static void deleteFile(String[] args) {
-
-    }
-
-    //upload = upload a file into the server db
-    public static void uploadFile(String[] args) {
-
+    public static void deleteFile(String filename) {
+        File file = new File("ServerFiles/" + filename);
+        if(file.exists()) {
+            System.out.println("File not found.");
+        } else {
+            file.delete();
+        }
     }
 
     //rename = change file name
-    public static void renameFile(String[] args) {
+    public static void renameFile(String filename, String newFilename) {
+        File file = new File("ServerFiles/" + filename);
+        if(!file.exists()) {
+            System.out.println("File not found.");
+        } else {
+            file.renameTo(new File("ServerFiles/" + newFilename));
+        }
+    }
 
+    //upload = upload a file into the server db
+    public static void uploadFile(String filename, SocketChannel socket) {
+        try {
+            FileOutputStream fs = new FileOutputStream("ServerFiles/" + filename, true);
+            FileChannel fc = fs.getChannel();
+            ByteBuffer fileContent = ByteBuffer.allocate(1024);
+
+            while (socket.read(fileContent) >= 0) {
+                fileContent.flip();
+                fc.write(fileContent);
+                fileContent.clear();
+            }
+            fs.close();
+
+        } catch (IOException e) {
+            System.err.print("Error fetching file.\n");
+        }
+    }
     }
 
 }
