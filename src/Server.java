@@ -30,7 +30,7 @@ public class Server {
             switch (Character.toLowerCase(commandChar)) {
                 case ('d'):
                     if (!individualFile.exists()) {
-                        System.out.println("File doesn't exist");
+                        serveChannel.write(ByteBuffer.wrap("400".getBytes()));
                     } else {
                         FileInputStream fs = new FileInputStream(individualFile);
                         FileChannel fc = fs.getChannel();
@@ -41,26 +41,24 @@ public class Server {
                             fileContent.flip();
                             serveChannel.write(fileContent);
                             fileContent.clear();
-                        } while (byteRead >= 0);
+                        } while (byteRead > -1);
                         fs.close();
-
-                        fc.read(fileContent);
-                        fileContent.flip();
-                        serveChannel.write(fileContent);
-                        serveChannel.close();
                     }
-                    serveChannel.write(ByteBuffer.wrap("200".getBytes()));
+                    serveChannel.shutdownOutput();
+                    serveChannel.close();
+
                     break;
                 case ('l'):
                     File[] files = allFiles.listFiles();
                     if (files == null) {
-                        System.out.println("No files found.");
+                        serveChannel.write(ByteBuffer.wrap("No files found".getBytes()));
                     } else {
                         for (File f : files) {
-                            System.out.println(f.getName());
+                            serveChannel.write(ByteBuffer.wrap(f.getName().getBytes()));
                         }
                     }
-                    serveChannel.write(ByteBuffer.wrap("200".getBytes()));
+                    serveChannel.shutdownOutput();
+
                     break;
                 case ('r'):
                     if (individualFile.exists()) {
@@ -78,6 +76,8 @@ public class Server {
                         individualFile.renameTo(new File("ServerFiles/" + newFilename[1]));
                     }
                     serveChannel.write(ByteBuffer.wrap("200".getBytes()));
+                    serveChannel.shutdownOutput();
+
                     break;
                 case ('u'):
                     try {
@@ -96,13 +96,19 @@ public class Server {
                         System.err.print("Error fetching file.\n");
                     }
                     serveChannel.write(ByteBuffer.wrap("200".getBytes()));
+                    serveChannel.shutdownOutput();
+
                     break;
                 case ('e'):
                     System.exit(0);
                     serveChannel.write(ByteBuffer.wrap("200".getBytes()));
+                    serveChannel.shutdownOutput();
+
                     break;
                 default:
                     serveChannel.write(ByteBuffer.wrap("400".getBytes()));
+                    serveChannel.shutdownOutput();
+
                     System.out.println("Invalid command");
             }
         }

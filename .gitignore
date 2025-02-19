@@ -1,6 +1,7 @@
 ### IntelliJ IDEA ###
 Project3.iml
 CS316-Project3.iml
+ServerFiles
 .idea
 out/
 !**/src/main/**/out/
