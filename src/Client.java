@@ -53,7 +53,7 @@ public class Client {
         String[] commandParts = new String[3];
         int i = 0;
         while (matcher.find() && i < commandParts.length) {
-            commandParts[i++] = matcher.group(1) != null ? matcher.group(1) : matcher.group(2);
+            commandParts[i++] = matcher.group(1) != null ? "\"" + matcher.group(1) + "\"" : matcher.group(2);
         }
         return commandParts;
     }
@@ -69,7 +69,7 @@ public class Client {
             case ("ls"):
                 commandBytes = ByteBuffer.wrap("l".getBytes());
                 socketChannel.write(commandBytes);
-                authentication(socketChannel, "List"); //fix this
+                authentication(socketChannel, "List");
                 socketChannel.shutdownOutput();
                 break;
             case ("rm"):
