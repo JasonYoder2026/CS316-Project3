@@ -76,14 +76,20 @@ public class Client {
                     listChannel.shutdownOutput();
                     System.out.println("Files: ");
                     ByteBuffer files = ByteBuffer.allocate(1024);
-                    while (listChannel.read(files) > 0) {
+                    StringBuilder fileList = new StringBuilder();
+                    while (listChannel.read(files) != -1) {
                         files.flip();
                         byte[] b = new byte[files.remaining()];
                         files.get(b);
-                        System.out.println(new String(b));
+                        String file = new String(b);
+                        fileList.append(file);
                         files.clear();
                     }
                     listChannel.close();
+                    String[] fileArray = fileList.toString().split("%");
+                    for (String f : fileArray) {
+                        System.out.println(f);
+                    }
                     break;
                 case ("rm"):
                     SocketChannel deleteChannel = SocketChannel.open();
