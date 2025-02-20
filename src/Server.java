@@ -28,6 +28,8 @@ public class Server {
             File individualFile = new File("ServerFiles/" + filename);
             File allFiles = new File("ServerFiles/");
 
+            System.out.println(receivedData);
+
             switch (Character.toLowerCase(commandChar)) {
                 case ('d'):
                     if (!individualFile.exists()) {
@@ -78,13 +80,12 @@ public class Server {
                     break;
                 case ('m'):
                     String[] splitFiles = filename.split("\\$");
-                    String oldFileName = splitFiles[1];
+                    String section1 = splitFiles[1];
+                    File oldFileName = new File("ServerFiles/" + section1);
                     String newFileName = splitFiles[2];
-\                    if (!individualFile.exists()) {
+                    if (!oldFileName.exists()) {
                         serverChannel.write(ByteBuffer.wrap("400".getBytes()));
                     } else {
-                        //regex separator; for example "myfile$newMyFile"
-
                         oldFileName.renameTo(new File("ServerFiles/" + newFileName));
                         serverChannel.write(ByteBuffer.wrap("200".getBytes()));
                     }
@@ -92,6 +93,9 @@ public class Server {
 
                     break;
                 case ('u'):
+//                    System.out.println(filename);
+                    serverChannel.write(ByteBuffer.wrap("ready".getBytes()));
+
                     try (FileOutputStream fs = new FileOutputStream("ServerFiles/" + filename, true)) {
                         ByteBuffer uploadBuffer = ByteBuffer.allocate(1024);
                         int uploadedBytesRead;
@@ -102,8 +106,8 @@ public class Server {
                             fs.write(u1);
                             uploadBuffer.clear();
                         }
-                        fs.close();
-                        serverChannel.write(ByteBuffer.wrap("200".getBytes()));
+                    fs.close();
+                    serverChannel.write(ByteBuffer.wrap("200".getBytes()));
                     } catch (IOException e) {
                         System.err.print("Error fetching file.\n");
                         serverChannel.write(ByteBuffer.wrap("400".getBytes()));
