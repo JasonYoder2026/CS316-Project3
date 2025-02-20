@@ -7,6 +7,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
+import java.util.ArrayList;
 
 public class Server {
     public static void main(String[] args) throws Exception {
@@ -30,8 +31,10 @@ public class Server {
             switch (Character.toLowerCase(commandChar)) {
                 case ('d'):
                     if (!individualFile.exists()) {
+                        System.out.println("doesn't exist");
                         serverChannel.write(ByteBuffer.wrap("400".getBytes()));
                     } else {
+                        serverChannel.write(ByteBuffer.wrap("200".getBytes()));
                         FileInputStream fs = new FileInputStream(individualFile);
                         FileChannel fc = fs.getChannel();
                         ByteBuffer fileContent = ByteBuffer.allocate(1024);
@@ -50,37 +53,45 @@ public class Server {
                     break;
                 case ('l'):
                     File[] files = allFiles.listFiles();
+                    StringBuilder stringFiles = new StringBuilder();
                     if (files == null) {
                         serverChannel.write(ByteBuffer.wrap("No files found".getBytes()));
                     } else {
                         for (File f : files) {
-                            serverChannel.write(ByteBuffer.wrap(f.getName().getBytes()));
+                            if (!f.getName().equals(".DS_Store")) {
+                                stringFiles.append(f.getName() + "%");
+                            }
                         }
+                        String fullString = new String(stringFiles);
+                        serverChannel.write(ByteBuffer.wrap(fullString.getBytes()));
                     }
                     serverChannel.shutdownOutput();
                     serverChannel.close();
                     break;
                 case ('r'):
-                    if (individualFile.exists()) {
-                        System.out.println("File not found.");
+                    if (!individualFile.exists()) {
+                        serverChannel.write(ByteBuffer.wrap("400".getBytes()));
                     } else {
                         individualFile.delete();
+                        serverChannel.write(ByteBuffer.wrap("200".getBytes()));
                     }
                     break;
                 case ('m'):
-                    if (!individualFile.exists()) {
-                        System.out.println("File not found.");
+                    String[] splitFiles = filename.split("\\$");
+                    String oldFileName = splitFiles[1];
+                    String newFileName = splitFiles[2];
+\                    if (!individualFile.exists()) {
+                        serverChannel.write(ByteBuffer.wrap("400".getBytes()));
                     } else {
                         //regex separator; for example "myfile$newMyFile"
-                        String[] newFilename = filename.split("\\$");
-                        individualFile.renameTo(new File("ServerFiles/" + newFilename[1]));
+
+                        oldFileName.renameTo(new File("ServerFiles/" + newFileName));
+                        serverChannel.write(ByteBuffer.wrap("200".getBytes()));
                     }
-                    serverChannel.write(ByteBuffer.wrap("200".getBytes()));
                     serverChannel.shutdownOutput();
 
                     break;
                 case ('u'):
-                    System.out.println(filename);
                     try (FileOutputStream fs = new FileOutputStream("ServerFiles/" + filename, true)) {
                         ByteBuffer uploadBuffer = ByteBuffer.allocate(1024);
                         int uploadedBytesRead;
