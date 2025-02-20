@@ -115,10 +115,9 @@ public class Server {
                     serverChannel.shutdownOutput();
                     break;
                 case ('e'):
-                    System.exit(0);
                     serverChannel.write(ByteBuffer.wrap("200".getBytes()));
                     serverChannel.shutdownOutput();
-
+                    System.exit(0);
                     break;
                 default:
                     serverChannel.write(ByteBuffer.wrap("400".getBytes()));
