@@ -118,15 +118,12 @@ public class Client {
                     } else {
                         uploadChannel.write(ByteBuffer.wrap(("u" + filenameToUpload).getBytes()));
                         FileInputStream fs = new FileInputStream(file);
-                        FileChannel fc = fs.getChannel();
-                        ByteBuffer fileContent = ByteBuffer.allocate(1024);
+                        byte[] fileContent = new byte[1024];
                         int byteRead;
-                        do {
-                            byteRead = fc.read(fileContent);
-                            fileContent.flip();
-                            uploadChannel.write(fileContent);
-                            fileContent.clear();
-                        } while (byteRead != -1);
+                        while((byteRead = fs.read(fileContent)) != -1) {
+                            ByteBuffer buffer = ByteBuffer.wrap(fileContent, 0, byteRead);
+                            uploadChannel.write(buffer);
+                        }
                         fs.close();
                         uploadChannel.shutdownOutput();
                         authentication("Upload", uploadChannel);

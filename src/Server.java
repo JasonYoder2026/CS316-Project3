@@ -58,7 +58,7 @@ public class Server {
                         }
                     }
                     serverChannel.shutdownOutput();
-
+                    serverChannel.close();
                     break;
                 case ('r'):
                     if (individualFile.exists()) {
@@ -80,15 +80,16 @@ public class Server {
 
                     break;
                 case ('u'):
-                    try {
-                        FileOutputStream fs = new FileOutputStream("ServerFiles/" + filename, true);
-                        FileChannel fc = fs.getChannel();
-                        ByteBuffer fileContent = ByteBuffer.allocate(1024);
-
-                        while (serverChannel.read(fileContent) != -1) {
-                            fileContent.flip();
-                            fc.write(fileContent);
-                            fileContent.clear();
+                    System.out.println(filename);
+                    try (FileOutputStream fs = new FileOutputStream("ServerFiles/" + filename, true)) {
+                        ByteBuffer uploadBuffer = ByteBuffer.allocate(1024);
+                        int uploadedBytesRead;
+                        while((uploadedBytesRead = serverChannel.read(uploadBuffer)) != -1) {
+                            uploadBuffer.flip();
+                            byte[] u1 = new byte[uploadedBytesRead];
+                            uploadBuffer.get(u1);
+                            fs.write(u1);
+                            uploadBuffer.clear();
                         }
                         fs.close();
                         serverChannel.write(ByteBuffer.wrap("200".getBytes()));
