@@ -14,9 +14,9 @@ public class Server {
         listenChannel.bind(new InetSocketAddress(3001));
 
         while (true) {
-            SocketChannel serveChannel = listenChannel.accept();
+            SocketChannel serverChannel = listenChannel.accept();
             ByteBuffer buffer = ByteBuffer.allocate(1024);
-            int bytesRead = serveChannel.read(buffer);
+            int bytesRead = serverChannel.read(buffer);
             buffer.flip();
             byte[] a = new byte[bytesRead];
             buffer.get(a);
@@ -30,7 +30,7 @@ public class Server {
             switch (Character.toLowerCase(commandChar)) {
                 case ('d'):
                     if (!individualFile.exists()) {
-                        serveChannel.write(ByteBuffer.wrap("400".getBytes()));
+                        serverChannel.write(ByteBuffer.wrap("400".getBytes()));
                     } else {
                         FileInputStream fs = new FileInputStream(individualFile);
                         FileChannel fc = fs.getChannel();
@@ -39,25 +39,25 @@ public class Server {
                         do {
                             byteRead = fc.read(fileContent);
                             fileContent.flip();
-                            serveChannel.write(fileContent);
+                            serverChannel.write(fileContent);
                             fileContent.clear();
                         } while (byteRead > -1);
                         fs.close();
                     }
-                    serveChannel.shutdownOutput();
-                    serveChannel.close();
+                    serverChannel.shutdownOutput();
+                    serverChannel.close();
 
                     break;
                 case ('l'):
                     File[] files = allFiles.listFiles();
                     if (files == null) {
-                        serveChannel.write(ByteBuffer.wrap("No files found".getBytes()));
+                        serverChannel.write(ByteBuffer.wrap("No files found".getBytes()));
                     } else {
                         for (File f : files) {
-                            serveChannel.write(ByteBuffer.wrap(f.getName().getBytes()));
+                            serverChannel.write(ByteBuffer.wrap(f.getName().getBytes()));
                         }
                     }
-                    serveChannel.shutdownOutput();
+                    serverChannel.shutdownOutput();
 
                     break;
                 case ('r'):
@@ -75,8 +75,8 @@ public class Server {
                         String[] newFilename = filename.split("\\$");
                         individualFile.renameTo(new File("ServerFiles/" + newFilename[1]));
                     }
-                    serveChannel.write(ByteBuffer.wrap("200".getBytes()));
-                    serveChannel.shutdownOutput();
+                    serverChannel.write(ByteBuffer.wrap("200".getBytes()));
+                    serverChannel.shutdownOutput();
 
                     break;
                 case ('u'):
@@ -85,29 +85,28 @@ public class Server {
                         FileChannel fc = fs.getChannel();
                         ByteBuffer fileContent = ByteBuffer.allocate(1024);
 
-                        while (serveChannel.read(fileContent) >= 0) {
+                        while (serverChannel.read(fileContent) != -1) {
                             fileContent.flip();
                             fc.write(fileContent);
                             fileContent.clear();
                         }
                         fs.close();
-
+                        serverChannel.write(ByteBuffer.wrap("200".getBytes()));
                     } catch (IOException e) {
                         System.err.print("Error fetching file.\n");
+                        serverChannel.write(ByteBuffer.wrap("400".getBytes()));
                     }
-                    serveChannel.write(ByteBuffer.wrap("200".getBytes()));
-                    serveChannel.shutdownOutput();
-
+                    serverChannel.shutdownOutput();
                     break;
                 case ('e'):
                     System.exit(0);
-                    serveChannel.write(ByteBuffer.wrap("200".getBytes()));
-                    serveChannel.shutdownOutput();
+                    serverChannel.write(ByteBuffer.wrap("200".getBytes()));
+                    serverChannel.shutdownOutput();
 
                     break;
                 default:
-                    serveChannel.write(ByteBuffer.wrap("400".getBytes()));
-                    serveChannel.shutdownOutput();
+                    serverChannel.write(ByteBuffer.wrap("400".getBytes()));
+                    serverChannel.shutdownOutput();
 
                     System.out.println("Invalid command");
             }
