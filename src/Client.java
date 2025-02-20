@@ -123,14 +123,23 @@ public class Client {
                         System.out.println("File not found");
                     } else {
                         uploadChannel.write(ByteBuffer.wrap(("u" + filenameToUpload).getBytes()));
-                        FileInputStream fs = new FileInputStream(file);
-                        byte[] fileContent = new byte[1024];
-                        int byteRead;
-                        while((byteRead = fs.read(fileContent)) != -1) {
-                            ByteBuffer buffer = ByteBuffer.wrap(fileContent, 0, byteRead);
-                            uploadChannel.write(buffer);
+                        ByteBuffer reply = ByteBuffer.allocate(1024);
+                        uploadChannel.read(reply);
+                        reply.flip();
+                        byte[] b = new byte[reply.remaining()];
+                        reply.get(b);
+                        reply.clear();
+                        String replyString = new String(b);
+                        if(replyString.equals("ready")) {
+                            FileInputStream fs = new FileInputStream(file);
+                            byte[] fileContent = new byte[1024];
+                            int byteRead;
+                            while ((byteRead = fs.read(fileContent)) != -1) {
+                                ByteBuffer buffer = ByteBuffer.wrap(fileContent, 0, byteRead);
+                                uploadChannel.write(buffer);
+                            }
+                            fs.close();
                         }
-                        fs.close();
                         uploadChannel.shutdownOutput();
                         authentication("Upload", uploadChannel);
                     }
@@ -158,7 +167,6 @@ public class Client {
         String statusCode = new String(a);
         if (statusCode.equals("400")) {
             System.out.println(command + " unsuccessful. An error occurred.");
-            System.exit(1);
         } else if (statusCode.equals("200")) {
             System.out.println(command + " successful.");
         }
