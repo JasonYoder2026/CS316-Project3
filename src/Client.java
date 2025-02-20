@@ -116,24 +116,20 @@ public class Client {
                     if (!file.exists()) {
                         System.out.println("File not found");
                     } else {
-                        try {
-                            uploadChannel.write(ByteBuffer.wrap("u".getBytes()));
-                            FileInputStream fs = new FileInputStream(file);
-                            FileChannel fc = fs.getChannel();
-                            ByteBuffer fileContent = ByteBuffer.allocate(1024);
-                            int byteRead;
-                            do {
-                                byteRead = fc.read(fileContent);
-                                fileContent.flip();
-                                uploadChannel.write(fileContent);
-                                fileContent.clear();
-                            } while(byteRead >= 0);
-                            fs.close();
-                            uploadChannel.shutdownOutput();
-                            authentication("Upload", uploadChannel);
-                        } catch (IOException e) {
-                            System.err.print("Error reading file.\n");
-                        }
+                        uploadChannel.write(ByteBuffer.wrap(("u" + filenameToUpload).getBytes()));
+                        FileInputStream fs = new FileInputStream(file);
+                        FileChannel fc = fs.getChannel();
+                        ByteBuffer fileContent = ByteBuffer.allocate(1024);
+                        int byteRead;
+                        do {
+                            byteRead = fc.read(fileContent);
+                            fileContent.flip();
+                            uploadChannel.write(fileContent);
+                            fileContent.clear();
+                        } while (byteRead != -1);
+                        fs.close();
+                        uploadChannel.shutdownOutput();
+                        authentication("Upload", uploadChannel);
                     }
                     uploadChannel.close();
                     break;
