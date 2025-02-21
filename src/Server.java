@@ -28,12 +28,9 @@ public class Server {
             File individualFile = new File("ServerFiles/" + filename);
             File allFiles = new File("ServerFiles/");
 
-            System.out.println(receivedData);
-
             switch (Character.toLowerCase(commandChar)) {
                 case ('d'):
                     if (!individualFile.exists()) {
-                        System.out.println("doesn't exist");
                         serverChannel.write(ByteBuffer.wrap("400".getBytes()));
                     } else {
                         serverChannel.write(ByteBuffer.wrap("200".getBytes()));
@@ -93,7 +90,6 @@ public class Server {
 
                     break;
                 case ('u'):
-//                    System.out.println(filename);
                     serverChannel.write(ByteBuffer.wrap("ready".getBytes()));
 
                     try (FileOutputStream fs = new FileOutputStream("ServerFiles/" + filename, true)) {
@@ -123,7 +119,6 @@ public class Server {
                     serverChannel.write(ByteBuffer.wrap("400".getBytes()));
                     serverChannel.shutdownOutput();
 
-                    System.out.println("Invalid command");
             }
         }
     }
