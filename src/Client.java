@@ -4,7 +4,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.nio.channels.SocketChannel;
 import java.util.Scanner;
 
@@ -53,12 +52,13 @@ public class Client {
                     } else {
                         try {
                             FileOutputStream fs = new FileOutputStream("ClientFiles/" + filename, true);
-                            FileChannel fc = fs.getChannel();
                             ByteBuffer fileContent = ByteBuffer.allocate(1024);
-
-                            while (downloadChannel.read(fileContent) >= 0) {
+                            int dlBytesRead;
+                            while ((dlBytesRead = downloadChannel.read(fileContent)) != -1) {
                                 fileContent.flip();
-                                fc.write(fileContent);
+                                byte[] data = new byte[dlBytesRead];
+                                fileContent.get(data);
+                                fs.write(data);
                                 fileContent.clear();
                             }
                             fs.close();
