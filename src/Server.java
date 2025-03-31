@@ -191,6 +191,7 @@ public class Server {
                 System.out.println("Invalid command");
             }
         }
+        es.shutdown();
         sc.close();
         System.exit(0);
     }
