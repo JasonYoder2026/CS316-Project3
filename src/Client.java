@@ -6,6 +6,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.Scanner;
+import java.util.concurrent.TimeUnit;
 
 public class Client {
     public static void main(String[] args) throws Exception {
@@ -35,6 +36,7 @@ public class Client {
                     SocketChannel downloadChannel = SocketChannel.open();
                     downloadChannel.connect(new InetSocketAddress(args[0], serverPort));
                     System.out.println("Enter filename: ");
+                    TimeUnit.SECONDS.sleep(10);
                     String filename = input.nextLine().trim();
                     downloadChannel.write(ByteBuffer.wrap(("d" + filename).getBytes()));
                     downloadChannel.shutdownOutput();
@@ -122,6 +124,7 @@ public class Client {
                     if (!file.exists()) {
                         System.out.println("File not found");
                     } else {
+                        TimeUnit.SECONDS.sleep(10);
                         uploadChannel.write(ByteBuffer.wrap(("u" + filenameToUpload).getBytes()));
                         ByteBuffer reply = ByteBuffer.allocate(1024);
                         uploadChannel.read(reply);
